@@ -8,386 +8,249 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-
-<!-- ══════════════════════════════════════════════════
-     FINESTRA PRINCIPAL
-══════════════════════════════════════════════════ -->
 <div id="window">
 
-  <!-- BARRA DE TÍTOL -->
+  <!-- TITLE BAR -->
   <div id="titlebar">
-    <!-- icona petita 16×16 en SVG inline -->
-    <svg class="title-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1"/>
-      <rect x="3" y="3" width="10" height="10" fill="none" stroke="#000" stroke-width="0.8"/>
-      <line x1="5" y1="6" x2="11" y2="6" stroke="#000" stroke-width="1"/>
-      <line x1="5" y1="8" x2="11" y2="8" stroke="#000" stroke-width="1"/>
-      <line x1="5" y1="10" x2="9" y2="10" stroke="#000" stroke-width="1"/>
-    </svg>
+    <svg class="title-icon" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#000" stroke-width="1"/><rect x="3" y="3" width="10" height="10" fill="none" stroke="#000" stroke-width="0.8"/><line x1="5" y1="6" x2="11" y2="6" stroke="#000" stroke-width="1"/><line x1="5" y1="8" x2="11" y2="8" stroke="#000" stroke-width="1"/><line x1="5" y1="10" x2="9" y2="10" stroke="#000" stroke-width="1"/></svg>
     <span class="title-text">GenArxiu v0.1 — Generador de Portades per a Partitures</span>
     <div class="win-btns">
-      <button title="Minimitzar">_</button>
-      <button title="Maximitzar">□</button>
-      <button title="Tancar">✕</button>
+      <button>_</button><button>□</button><button>✕</button>
     </div>
   </div>
 
-  <!-- BARRA DE MENÚ -->
+  <!-- MENU BAR -->
   <div id="menubar">
     <span class="menu-item" onclick="importConfig()">Fitxer</span>
     <span class="menu-item" onclick="showAbout()">Ajuda</span>
   </div>
 
-  <!-- BARRA D'EINES -->
+  <!-- TOOLBAR -->
   <div id="toolbar">
-    <button class="tb-btn" onclick="importConfig()" title="Importar configuració JSON">
-      📂 Importar config
-    </button>
-    <button class="tb-btn" onclick="exportConfig()" title="Exportar configuració JSON">
-      💾 Exportar config
-    </button>
+    <button class="tb-btn" onclick="importConfig()">📂 Importar</button>
+    <button class="tb-btn" onclick="exportConfig()">💾 Exportar</button>
     <div class="tb-sep"></div>
-    <button class="tb-btn" onclick="generatePDF('a4')" title="Generar PDF A4 vertical">
-      🖨 PDF A4
-    </button>
-    <button class="tb-btn" onclick="generatePDF('a5')" title="Generar PDF A5 horitzontal">
-      🖨 PDF A5 horit.
-    </button>
+    <button class="tb-btn" onclick="generatePDF('a4')">🖨 PDF A4</button>
+    <button class="tb-btn" onclick="generatePDF('a5')">🖨 PDF A5 horit.</button>
     <div class="tb-sep"></div>
+    <button class="tb-btn" id="dark-btn" onclick="toggleDark()">🌙 Fosc</button>
     <button class="tb-btn" onclick="showAbout()">❓ Quant a</button>
   </div>
 
-  <!-- COS PRINCIPAL -->
+  <!-- APP BODY -->
   <div id="app-body">
 
-    <!-- ══ PANELL ESQUERRE ══ -->
+    <!-- ══ PANEL ESQUERRE ══ -->
     <div id="panel">
       <div id="panel-scroll">
 
-        <!-- ── CONTINGUT ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px;margin-top:4px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Contingut
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
-            <div class="field field-full" style="margin-bottom:5px">
-              <label for="f-num">Número de catàleg:</label>
-              <input type="text" id="f-num" placeholder="Ex: OP.42 · B.003" oninput="queueRender()">
-            </div>
-            <div class="field field-full" style="margin-bottom:5px">
-              <label for="f-tit">Títol de l'obra:</label>
-              <input type="text" id="f-tit" placeholder="Ex: Simfonia en Re menor" oninput="queueRender()">
-            </div>
-            <div class="field field-full">
-              <label for="f-comp">Compositor / Autor:</label>
-              <input type="text" id="f-comp" placeholder="Ex: Johannes Brahms" oninput="queueRender()">
-            </div>
+        <!-- CONTINGUT -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Contingut</div>
+          <div class="gb-body">
+            <div class="fld"><label for="f-num">Número de catàleg:</label>
+              <input type="text" id="f-num" placeholder="Ex: OP.42 · B.003" oninput="qR()"></div>
+            <div class="fld"><label for="f-tit">Títol de l'obra:</label>
+              <input type="text" id="f-tit" placeholder="Ex: Simfonia en Re menor" oninput="qR()"></div>
+            <div class="fld"><label for="f-comp">Compositor / Autor:</label>
+              <input type="text" id="f-comp" placeholder="Ex: Johannes Brahms" oninput="qR()"></div>
           </div>
         </div>
 
-        <!-- ── NÚMERO ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Número
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
-
-            <div class="field field-full" style="margin-bottom:4px">
-              <label>Tipografia i mida (pt):</label>
+        <!-- NÚMERO -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Número</div>
+          <div class="gb-body">
+            <div class="fld"><label>Tipografia i mida (pt):</label>
               <div class="font-row">
-                <select id="fn-num" onchange="queueRender()">
+                <select id="fn-num" onchange="qR()">
+                  <option value="Arial,sans-serif" selected>Arial</option>
+                  <option value="sans-serif">Sans-serif</option>
+                  <option value="'Helvetica Neue',Helvetica,sans-serif">Helvetica</option>
+                  <option value="Verdana,sans-serif">Verdana</option>
+                  <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
                   <option value="serif">Serif clàssic</option>
                   <option value="Georgia,serif">Georgia</option>
                   <option value="'Times New Roman',serif">Times New Roman</option>
                   <option value="'Palatino Linotype',Palatino,serif">Palatino</option>
-                  <option value="sans-serif">Sans-serif</option>
-                  <option value="Arial,sans-serif">Arial</option>
-                  <option value="'Helvetica Neue',Helvetica,sans-serif">Helvetica</option>
-                  <option value="Verdana,sans-serif">Verdana</option>
-                  <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
                   <option value="'Courier New',monospace">Courier New</option>
                   <option value="'Lucida Console',monospace">Lucida Console</option>
                   <option value="cursive">Cursiu</option>
                   <option value="fantasy">Fantasy</option>
                 </select>
-                <input type="number" id="fs-num" value="48" min="8" max="200" oninput="queueRender()">
+                <input type="number" id="fs-num" value="48" min="8" max="200" oninput="qR()">
+                <div class="style-btns">
+                  <button class="style-btn" id="bold-num" title="Negreta" onclick="toggleStyle(this)"><b>N</b></button>
+                  <button class="style-btn" id="ital-num" title="Cursiva" onclick="toggleStyle(this)"><i>C</i></button>
+                </div>
               </div>
             </div>
-
-            <!-- Justificació horitzontal -->
             <div class="just-row">
               <span class="just-label">Just. horit.:</span>
               <div class="just-group" id="jh-num" data-v="E">
-                <!-- Esquerra -->
-                <button class="just-btn on" onclick="setJust(this)" data-k="E" title="Esquerra">
-                  <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="1" y1="3"  x2="13" y2="3"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="1" y1="6"  x2="9"  y2="6"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="1" y1="9"  x2="11" y2="9"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="1" y1="12" x2="7"  y2="12" stroke="#000" stroke-width="1.5"/>
-                  </svg>
-                </button>
-                <!-- Centre -->
-                <button class="just-btn" onclick="setJust(this)" data-k="C" title="Centre">
-                  <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="1"   y1="3"  x2="13"  y2="3"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="2.5" y1="6"  x2="11.5" y2="6"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="1.5" y1="9"  x2="12.5" y2="9"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/>
-                  </svg>
-                </button>
-                <!-- Dreta -->
-                <button class="just-btn" onclick="setJust(this)" data-k="D" title="Dreta">
-                  <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="1"  y1="3"  x2="13" y2="3"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="5"  y1="6"  x2="13" y2="6"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="3"  y1="9"  x2="13" y2="9"  stroke="#000" stroke-width="1.5"/>
-                    <line x1="7"  y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/>
-                  </svg>
-                </button>
+                <button class="just-btn on" onclick="setJust(this)" data-k="E" title="Esquerra"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="D" title="Dreta"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
               </div>
             </div>
-
-            <!-- Justificació vertical -->
             <div class="just-row">
               <span class="just-label">Just. vert.:</span>
               <div class="just-group" id="jv-num" data-v="D">
-                <!-- Dalt -->
-                <button class="just-btn on" onclick="setJust(this)" data-k="D" title="Dalt">
-                  <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/>
-                    <rect x="5" y="3" width="4" height="9" fill="#000"/>
-                  </svg>
-                </button>
-                <!-- Centre -->
-                <button class="just-btn" onclick="setJust(this)" data-k="C" title="Centre">
-                  <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/>
-                    <rect x="5" y="2" width="4" height="10" fill="#000"/>
-                  </svg>
-                </button>
-                <!-- Baix -->
-                <button class="just-btn" onclick="setJust(this)" data-k="B" title="Baix">
-                  <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/>
-                    <rect x="5" y="2" width="4" height="9" fill="#000"/>
-                  </svg>
-                </button>
+                <button class="just-btn on" onclick="setJust(this)" data-k="D" title="Dalt"><svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="B" title="Baix"><svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg></button>
               </div>
             </div>
-
-            <label class="chk-row">
-              <input type="checkbox" id="sub-num" onchange="queueRender()"> Subratllat
-            </label>
+            <label class="chk-row"><input type="checkbox" id="sub-num" onchange="qR()"> Subratllat</label>
             <div class="color-row">
               <label>Color:</label>
-              <div class="color-swatch" id="sw-num" style="background:#000000">
-                <input type="color" id="cp-num" value="#000000" oninput="syncPicker('num')">
-              </div>
-              <input type="text" id="ct-num" class="color-hex" value="#000000"
-                     oninput="syncText('num')" maxlength="7" placeholder="#000000">
+              <div class="color-swatch" id="sw-num" style="background:#000000"><input type="color" id="cp-num" value="#000000" oninput="syncPicker('num')"></div>
+              <input type="text" id="ct-num" class="color-hex" value="#000000" oninput="syncText('num')" maxlength="7">
             </div>
-
           </div>
         </div>
 
-        <!-- ── TÍTOL ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Títol
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
-
-            <div class="field field-full" style="margin-bottom:4px">
-              <label>Tipografia i mida (pt):</label>
+        <!-- TÍTOL -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Títol</div>
+          <div class="gb-body">
+            <div class="fld"><label>Tipografia i mida (pt):</label>
               <div class="font-row">
-                <select id="fn-tit" onchange="queueRender()">
-                  <option value="'Playfair Display',Georgia,serif">Playfair Display</option>
-                  <option value="Georgia,serif">Georgia</option>
-                  <option value="'Times New Roman',serif">Times New Roman</option>
-                  <option value="'Palatino Linotype',Palatino,serif">Palatino</option>
-                  <option value="serif">Serif clàssic</option>
+                <select id="fn-tit" onchange="qR()">
+                  <option value="Arial,sans-serif" selected>Arial</option>
                   <option value="sans-serif">Sans-serif</option>
-                  <option value="Arial,sans-serif">Arial</option>
                   <option value="'Helvetica Neue',Helvetica,sans-serif">Helvetica</option>
                   <option value="Verdana,sans-serif">Verdana</option>
                   <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
+                  <option value="serif">Serif clàssic</option>
+                  <option value="Georgia,serif">Georgia</option>
+                  <option value="'Times New Roman',serif">Times New Roman</option>
+                  <option value="'Palatino Linotype',Palatino,serif">Palatino</option>
+                  <option value="'Playfair Display',Georgia,serif">Playfair Display</option>
                   <option value="'Courier New',monospace">Courier New</option>
                   <option value="cursive">Cursiu</option>
                   <option value="fantasy">Fantasy</option>
                 </select>
-                <input type="number" id="fs-tit" value="72" min="8" max="200" oninput="queueRender()">
+                <input type="number" id="fs-tit" value="72" min="8" max="200" oninput="qR()">
+                <div class="style-btns">
+                  <button class="style-btn" id="bold-tit" title="Negreta" onclick="toggleStyle(this)"><b>N</b></button>
+                  <button class="style-btn" id="ital-tit" title="Cursiva" onclick="toggleStyle(this)"><i>C</i></button>
+                </div>
               </div>
             </div>
-
             <div class="just-row">
               <span class="just-label">Just. horit.:</span>
               <div class="just-group" id="jh-tit" data-v="C">
-                <button class="just-btn" onclick="setJust(this)" data-k="E" title="Esquerra">
-                  <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                </button>
-                <button class="just-btn on" onclick="setJust(this)" data-k="C" title="Centre">
-                  <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                </button>
-                <button class="just-btn" onclick="setJust(this)" data-k="D" title="Dreta">
-                  <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                </button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="E" title="Esquerra"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                <button class="just-btn on" onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="D" title="Dreta"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
               </div>
             </div>
             <div class="just-row">
               <span class="just-label">Just. vert.:</span>
               <div class="just-group" id="jv-tit" data-v="C">
-                <button class="just-btn" onclick="setJust(this)" data-k="D" title="Dalt">
-                  <svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg>
-                </button>
-                <button class="just-btn on" onclick="setJust(this)" data-k="C" title="Centre">
-                  <svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg>
-                </button>
-                <button class="just-btn" onclick="setJust(this)" data-k="B" title="Baix">
-                  <svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg>
-                </button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="D" title="Dalt"><svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg></button>
+                <button class="just-btn on" onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="B" title="Baix"><svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg></button>
               </div>
             </div>
-
-            <label class="chk-row">
-              <input type="checkbox" id="sub-tit" onchange="queueRender()"> Subratllat
-            </label>
+            <label class="chk-row"><input type="checkbox" id="sub-tit" onchange="qR()"> Subratllat</label>
             <div class="color-row">
               <label>Color:</label>
-              <div class="color-swatch" id="sw-tit" style="background:#000000">
-                <input type="color" id="cp-tit" value="#000000" oninput="syncPicker('tit')">
-              </div>
-              <input type="text" id="ct-tit" class="color-hex" value="#000000"
-                     oninput="syncText('tit')" maxlength="7" placeholder="#000000">
+              <div class="color-swatch" id="sw-tit" style="background:#000000"><input type="color" id="cp-tit" value="#000000" oninput="syncPicker('tit')"></div>
+              <input type="text" id="ct-tit" class="color-hex" value="#000000" oninput="syncText('tit')" maxlength="7">
             </div>
           </div>
         </div>
 
-        <!-- ── COMPOSITOR ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Compositor
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
-
-            <div class="field field-full" style="margin-bottom:4px">
-              <label>Tipografia i mida (pt):</label>
+        <!-- COMPOSITOR -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Compositor</div>
+          <div class="gb-body">
+            <div class="fld"><label>Tipografia i mida (pt):</label>
               <div class="font-row">
-                <select id="fn-comp" onchange="queueRender()">
-                  <option value="serif">Serif clàssic</option>
-                  <option value="'Playfair Display',Georgia,serif">Playfair Display</option>
-                  <option value="Georgia,serif">Georgia</option>
-                  <option value="'Times New Roman',serif">Times New Roman</option>
-                  <option value="'Palatino Linotype',Palatino,serif">Palatino</option>
+                <select id="fn-comp" onchange="qR()">
+                  <option value="Arial,sans-serif" selected>Arial</option>
                   <option value="sans-serif">Sans-serif</option>
-                  <option value="Arial,sans-serif">Arial</option>
                   <option value="'Helvetica Neue',Helvetica,sans-serif">Helvetica</option>
                   <option value="Verdana,sans-serif">Verdana</option>
                   <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
+                  <option value="serif">Serif clàssic</option>
+                  <option value="Georgia,serif">Georgia</option>
+                  <option value="'Times New Roman',serif">Times New Roman</option>
+                  <option value="'Palatino Linotype',Palatino,serif">Palatino</option>
+                  <option value="'Playfair Display',Georgia,serif">Playfair Display</option>
                   <option value="'Courier New',monospace">Courier New</option>
                   <option value="cursive">Cursiu</option>
                   <option value="fantasy">Fantasy</option>
                 </select>
-                <input type="number" id="fs-comp" value="28" min="8" max="200" oninput="queueRender()">
+                <input type="number" id="fs-comp" value="28" min="8" max="200" oninput="qR()">
+                <div class="style-btns">
+                  <button class="style-btn" id="bold-comp" title="Negreta" onclick="toggleStyle(this)"><b>N</b></button>
+                  <button class="style-btn" id="ital-comp" title="Cursiva" onclick="toggleStyle(this)"><i>C</i></button>
+                </div>
               </div>
             </div>
-
             <div class="just-row">
               <span class="just-label">Just. horit.:</span>
               <div class="just-group" id="jh-comp" data-v="E">
-                <button class="just-btn on" onclick="setJust(this)" data-k="E" title="Esquerra">
-                  <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                </button>
-                <button class="just-btn" onclick="setJust(this)" data-k="C" title="Centre">
-                  <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                </button>
-                <button class="just-btn" onclick="setJust(this)" data-k="D" title="Dreta">
-                  <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                </button>
+                <button class="just-btn on" onclick="setJust(this)" data-k="E" title="Esquerra"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="D" title="Dreta"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
               </div>
             </div>
             <div class="just-row">
               <span class="just-label">Just. vert.:</span>
               <div class="just-group" id="jv-comp" data-v="B">
-                <button class="just-btn" onclick="setJust(this)" data-k="D" title="Dalt">
-                  <svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg>
-                </button>
-                <button class="just-btn" onclick="setJust(this)" data-k="C" title="Centre">
-                  <svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg>
-                </button>
-                <button class="just-btn on" onclick="setJust(this)" data-k="B" title="Baix">
-                  <svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg>
-                </button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="D" title="Dalt"><svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg></button>
+                <button class="just-btn"    onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg></button>
+                <button class="just-btn on" onclick="setJust(this)" data-k="B" title="Baix"><svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg></button>
               </div>
             </div>
-
-            <label class="chk-row">
-              <input type="checkbox" id="sub-comp" onchange="queueRender()"> Subratllat
-            </label>
+            <label class="chk-row"><input type="checkbox" id="sub-comp" onchange="qR()"> Subratllat</label>
             <div class="color-row">
               <label>Color:</label>
-              <div class="color-swatch" id="sw-comp" style="background:#000000">
-                <input type="color" id="cp-comp" value="#000000" oninput="syncPicker('comp')">
-              </div>
-              <input type="text" id="ct-comp" class="color-hex" value="#000000"
-                     oninput="syncText('comp')" maxlength="7" placeholder="#000000">
+              <div class="color-swatch" id="sw-comp" style="background:#000000"><input type="color" id="cp-comp" value="#000000" oninput="syncPicker('comp')"></div>
+              <input type="text" id="ct-comp" class="color-hex" value="#000000" oninput="syncText('comp')" maxlength="7">
             </div>
           </div>
         </div>
 
-        <!-- ── MARC ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Marc decoratiu
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
-            <label class="chk-row">
-              <input type="checkbox" id="show-marc" checked onchange="queueRender()"> Mostrar marc
-            </label>
+        <!-- MARC -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Marc decoratiu</div>
+          <div class="gb-body">
+            <label class="chk-row"><input type="checkbox" id="show-marc" checked onchange="qR()"> Mostrar marc</label>
             <div class="color-row">
               <label>Color:</label>
-              <div class="color-swatch" id="sw-marc" style="background:#000000">
-                <input type="color" id="cp-marc" value="#000000" oninput="syncPicker('marc')">
-              </div>
-              <input type="text" id="ct-marc" class="color-hex" value="#000000"
-                     oninput="syncText('marc')" maxlength="7" placeholder="#000000">
+              <div class="color-swatch" id="sw-marc" style="background:#000000"><input type="color" id="cp-marc" value="#000000" oninput="syncPicker('marc')"></div>
+              <input type="text" id="ct-marc" class="color-hex" value="#000000" oninput="syncText('marc')" maxlength="7">
             </div>
           </div>
         </div>
 
-        <!-- ── FONS ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Fons
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
-            <div class="field field-full" style="margin-bottom:5px">
-              <label>Tipus de fons:</label>
+        <!-- FONS -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Fons</div>
+          <div class="gb-body">
+            <div class="fld"><label>Tipus:</label>
               <select id="fons-mode" onchange="onFonsModeChange()">
                 <option value="color">Color sòlid</option>
-                <option value="imatge">Imatge (mode cover)</option>
+                <option value="imatge">Imatge (cover)</option>
               </select>
             </div>
-            <!-- Color sòlid -->
             <div id="fons-color-ui">
               <div class="color-row">
                 <label>Color:</label>
-                <div class="color-swatch" id="sw-fons" style="background:#ffffff">
-                  <input type="color" id="cp-fons" value="#ffffff" oninput="syncPicker('fons')">
-                </div>
-                <input type="text" id="ct-fons" class="color-hex" value="#ffffff"
-                       oninput="syncText('fons')" maxlength="7" placeholder="#ffffff">
+                <div class="color-swatch" id="sw-fons" style="background:#ffffff"><input type="color" id="cp-fons" value="#ffffff" oninput="syncPicker('fons')"></div>
+                <input type="text" id="ct-fons" class="color-hex" value="#ffffff" oninput="syncText('fons')" maxlength="7">
               </div>
             </div>
-            <!-- Imatge -->
             <div id="fons-img-ui" style="display:none">
               <div class="upload-row">
-                <label>Imatge:</label>
-                <input type="file" id="fons-file" accept="image/*"
-                       style="display:none" onchange="loadFons(this)">
-                <button class="win-btn" onclick="document.getElementById('fons-file').click()">
-                  Triar...
-                </button>
+                <label>Fitxer:</label>
+                <input type="file" id="fons-file" accept="image/*" style="display:none" onchange="loadFons(this)">
+                <button class="win-btn" onclick="document.getElementById('fons-file').click()">Triar...</button>
                 <span class="upload-name" id="fons-name">(cap)</span>
               </div>
               <div class="upload-row" style="justify-content:flex-end">
@@ -397,50 +260,39 @@
           </div>
         </div>
 
-        <!-- ── LOGOTIP ── -->
-        <div class="groupbox-wrap" style="margin-bottom:6px">
-          <div style="display:flex;align-items:center;gap:4px;cursor:default;padding:2px 0;font-weight:bold;font-size:11px;margin-bottom:2px">
-            <span class="sec-arrow">▼</span> Logotip (opcional)
-          </div>
-          <div class="groupbox-body" style="border:1px solid #808080;padding:6px 8px">
+        <!-- LOGOTIP -->
+        <div class="gb-wrap">
+          <div class="gb-head"><span class="gb-arrow">▼</span> Logotip (opcional)</div>
+          <div class="gb-body">
             <div class="upload-row">
-              <label>Imatge:</label>
-              <input type="file" id="logo-file" accept="image/*"
-                     style="display:none" onchange="loadLogo(this)">
-              <button class="win-btn" onclick="document.getElementById('logo-file').click()">
-                Triar...
-              </button>
+              <label>Fitxer:</label>
+              <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="loadLogo(this)">
+              <button class="win-btn" onclick="document.getElementById('logo-file').click()">Triar...</button>
               <span class="upload-name" id="logo-name">(cap)</span>
             </div>
-
             <div id="logo-opts" style="display:none">
               <div class="hr"></div>
+              <!-- MIDA DEL LOGO -->
+              <div class="slider-row">
+                <label>Mida (%):</label>
+                <input type="range" id="logo-size-slider" min="10" max="400" value="100" oninput="onLogoSize(this)">
+                <input type="number" id="logo-size-num" value="100" min="10" max="400" oninput="onLogoSize(this)">
+              </div>
+              <!-- JUSTIFICACIÓ LOGO -->
               <div class="just-row">
                 <span class="just-label">Just. horit.:</span>
                 <div class="just-group" id="jh-logo" data-v="D">
-                  <button class="just-btn" onclick="setJust(this)" data-k="E" title="Esquerra">
-                    <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                  </button>
-                  <button class="just-btn" onclick="setJust(this)" data-k="C" title="Centre">
-                    <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                  </button>
-                  <button class="just-btn on" onclick="setJust(this)" data-k="D" title="Dreta">
-                    <svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg>
-                  </button>
+                  <button class="just-btn"    onclick="setJust(this)" data-k="E" title="Esquerra"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="1" y1="6" x2="9" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1" y1="9" x2="11" y2="9" stroke="#000" stroke-width="1.5"/><line x1="1" y1="12" x2="7" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                  <button class="just-btn"    onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="2.5" y1="6" x2="11.5" y2="6" stroke="#000" stroke-width="1.5"/><line x1="1.5" y1="9" x2="12.5" y2="9" stroke="#000" stroke-width="1.5"/><line x1="3.5" y1="12" x2="10.5" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
+                  <button class="just-btn on" onclick="setJust(this)" data-k="D" title="Dreta"><svg viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="#000" stroke-width="1.5"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1.5"/><line x1="3" y1="9" x2="13" y2="9" stroke="#000" stroke-width="1.5"/><line x1="7" y1="12" x2="13" y2="12" stroke="#000" stroke-width="1.5"/></svg></button>
                 </div>
               </div>
               <div class="just-row">
                 <span class="just-label">Just. vert.:</span>
                 <div class="just-group" id="jv-logo" data-v="D">
-                  <button class="just-btn on" onclick="setJust(this)" data-k="D" title="Dalt">
-                    <svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg>
-                  </button>
-                  <button class="just-btn" onclick="setJust(this)" data-k="C" title="Centre">
-                    <svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg>
-                  </button>
-                  <button class="just-btn" onclick="setJust(this)" data-k="B" title="Baix">
-                    <svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg>
-                  </button>
+                  <button class="just-btn on" onclick="setJust(this)" data-k="D" title="Dalt"><svg viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="2" stroke="#000" stroke-width="1.5"/><rect x="5" y="3" width="4" height="9" fill="#000"/></svg></button>
+                  <button class="just-btn"    onclick="setJust(this)" data-k="C" title="Centre"><svg viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="10" fill="#000"/></svg></button>
+                  <button class="just-btn"    onclick="setJust(this)" data-k="B" title="Baix"><svg viewBox="0 0 14 14"><line x1="2" y1="12" x2="12" y2="12" stroke="#000" stroke-width="1.5"/><rect x="5" y="2" width="4" height="9" fill="#000"/></svg></button>
                 </div>
               </div>
               <div class="upload-row" style="justify-content:flex-end">
@@ -450,8 +302,8 @@
           </div>
         </div>
 
-        <!-- ── CRÈDITS ── -->
-        <div style="border:1px solid #808080;padding:6px 8px;margin-bottom:4px;font-size:10px;color:#444;line-height:1.6">
+        <!-- CRÈDITS -->
+        <div class="credits">
           <strong>GenArxiu v0.1</strong><br>
           Desenvolupador: MarcMànyez<br>
           Llicència: GPLv3<br>
@@ -460,18 +312,13 @@
 
       </div><!-- /panel-scroll -->
 
-      <!-- BARRA D'ACCIONS -->
       <div id="action-bar">
-        <button class="win-btn default-btn" onclick="generatePDF('a4')">
-          🖨 Generar PDF A4
-        </button>
-        <button class="win-btn" onclick="generatePDF('a5')">
-          🖨 PDF A5 horit.
-        </button>
+        <button class="win-btn primary" onclick="generatePDF('a4')">🖨 Generar PDF A4</button>
+        <button class="win-btn" onclick="generatePDF('a5')">🖨 PDF A5 horit.</button>
       </div>
     </div><!-- /panel -->
 
-    <!-- ══ ÀREA DE PREVIEW ══ -->
+    <!-- PREVIEW -->
     <div id="preview">
       <div id="preview-toolbar">
         <span class="preview-lbl">Previsualització</span>
@@ -491,11 +338,10 @@
           <div class="preview-caption">A5 horitzontal — 297 × 210 mm</div>
         </div>
       </div>
-    </div><!-- /preview -->
+    </div>
 
   </div><!-- /app-body -->
 
-  <!-- BARRA D'ESTAT -->
   <div id="statusbar">
     <div class="status-pane flex1" id="status-content">Preparat</div>
     <div class="status-pane" id="status-logo">Sense logo</div>
@@ -503,9 +349,7 @@
   </div>
 
 </div><!-- /window -->
-
 <div id="toast"></div>
-
 <script src="app.js"></script>
 </body>
 </html>
