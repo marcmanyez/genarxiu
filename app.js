@@ -4,8 +4,11 @@
 'use strict';
 
 const A4W = 595.28, A4H = 841.89;
-const A5W = 841.89, A5H = 595.28;
+// A5 horitzontal: 148 × 210 mm = 419.53 × 595.28 pt
+const A5W = 419.53, A5H = 595.28;
 const CS  = 2; // canvas retina scale
+// Factor d'escala A5 respecte A4: A5W/A4W ≈ 0.7071 (√2 invers)
+const A5_ESC = A5W / A4W;
 
 const S = { tab: 'a4', logo: null, fons: null };
 let _rt = null, _tt = null;
@@ -167,12 +170,6 @@ function xH(jh, left, cen, right) { return jh==='E'?left : jh==='C'?cen : right;
 function ytop(jv, blockH, PH, MG) {
   return jv==='D' ? MG : jv==='C' ? PH/2 - blockH/2 : PH - MG - blockH;
 }
-function ytop_a5_num(jv, blockH, PH, MG) {
-  return jv==='D' ? MG : jv==='C' ? PH*0.25 - blockH/2 : PH - MG - blockH;
-}
-function ytop_a5_comp(jv, blockH, PH, MG) {
-  return jv==='D' ? MG : jv==='C' ? PH*0.75 - blockH/2 : PH - MG - blockH;
-}
 
 /* ── DRAW BLOCK ── */
 function drawBlock(ctx, lines, sz, lineH, jh, x0, xc, x1, y0, color, underline, esc) {
@@ -192,73 +189,75 @@ function drawBlock(ctx, lines, sz, lineH, jh, x0, xc, x1, y0, color, underline, 
 
 /* ══ CORE DRAW ══ */
 function drawCover(ctx, C, isA5, PW, PH) {
-  const ESC  = isA5 ? 0.65 : 1.0;
-  const MG   = isA5 ? 26   : 50;
-  const OUT  = isA5 ? 10   : 20;
-  const maxW = PW - 2*MG;
+  // ESC escala les mides de font i marges proporcionalment a la pàgina real.
+  // A5 horitzontal (419.53×595.28pt) té amplada = A4W/√2 → ESC = A5W/A4W ≈ 0.7071
+  const ESC  = isA5 ? A5_ESC : 1.0;
+  const MG   = 50 * ESC;   // marge proporcional a la pàgina
+  const OUT  = 20 * ESC;   // marc exterior proporcional
+  const maxW = PW - 2 * MG;
 
   /* FONS */
   if (C.fonsIsColor || !S.fons) {
-    ctx.fillStyle = C.cFons; ctx.fillRect(0,0,PW,PH);
+    ctx.fillStyle = C.cFons; ctx.fillRect(0, 0, PW, PH);
   } else {
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,PW,PH);
-    const sc = Math.max(PW/S.fons.width, PH/S.fons.height);
-    ctx.drawImage(S.fons, (PW-S.fons.width*sc)/2, (PH-S.fons.height*sc)/2, S.fons.width*sc, S.fons.height*sc);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
+    const sc = Math.max(PW / S.fons.width, PH / S.fons.height);
+    ctx.drawImage(S.fons,
+      (PW - S.fons.width  * sc) / 2,
+      (PH - S.fons.height * sc) / 2,
+      S.fons.width * sc, S.fons.height * sc);
   }
 
   /* MARC */
   if (C.showMarc) {
     ctx.strokeStyle = C.cMarc;
-    ctx.lineWidth   = isA5 ? 1.2 : 2;
-    ctx.strokeRect(OUT, OUT, PW-2*OUT, PH-2*OUT);
+    ctx.lineWidth   = 2 * ESC;
+    ctx.strokeRect(OUT, OUT, PW - 2*OUT, PH - 2*OUT);
   }
 
-  /* NÚMERO */
+  /* NÚMERO — sempre una línia, redueix mida si no cap */
   if (C.num) {
-    const sz = C.fsNum * ESC;
-    ctx.font = fstr(sz, C.boldNum, C.italNum, C.fnNum);
-    // número sempre en una línia; reduïm mida si no cap
-    let fsz = sz;
+    let fsz = C.fsNum * ESC;
+    ctx.font = fstr(fsz, C.boldNum, C.italNum, C.fnNum);
     while (fsz > 10 && ctx.measureText(C.num).width > maxW) {
       fsz -= 2; ctx.font = fstr(fsz, C.boldNum, C.italNum, C.fnNum);
     }
     const tw = ctx.measureText(C.num).width;
-    const nx = xH(C.jhNum, MG, PW/2-tw/2, PW-MG-tw);
+    const nx = xH(C.jhNum, MG, PW/2 - tw/2, PW - MG - tw);
     const yt = isA5 ? ytop_a5_num(C.jvNum, fsz, PH, MG) : ytop(C.jvNum, fsz, PH, MG);
     const ny = yt + fsz;
-    ctx.fillStyle = C.cNum; ctx.fillText(C.num, nx, ny);
+    ctx.fillStyle = C.cNum;
+    ctx.fillText(C.num, nx, ny);
     if (C.sNum) {
-      ctx.save(); ctx.strokeStyle=C.cNum; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(nx,ny+4); ctx.lineTo(nx+tw,ny+4); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.strokeStyle = C.cNum; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(nx, ny+4); ctx.lineTo(nx+tw, ny+4); ctx.stroke();
+      ctx.restore();
     }
   }
 
   /* LOGOTIP */
   if (S.logo) {
-    const pct  = C.logoSize / 100;
+    const pct   = C.logoSize / 100;
     const baseW = C.fsNum * ESC * 2 * pct;
     const baseH = C.fsNum * ESC * 1.5 * pct;
-    const sc   = Math.min(baseW / S.logo.width, baseH / S.logo.height);
-    const lw   = S.logo.width * sc, lh = S.logo.height * sc;
-    const lx   = xH(C.jhLogo, MG, PW/2-lw/2, PW-MG-lw);
-    const ly   = isA5
-      ? (C.jvLogo==='D' ? MG : C.jvLogo==='C' ? PH*0.4-lh/2 : PH-MG-lh)
-      : (C.jvLogo==='D' ? MG : C.jvLogo==='C' ? PH/2-lh/2   : PH-MG-lh);
+    const sc    = Math.min(baseW / S.logo.width, baseH / S.logo.height);
+    const lw    = S.logo.width * sc, lh = S.logo.height * sc;
+    const lx    = xH(C.jhLogo, MG, PW/2 - lw/2, PW - MG - lw);
+    const ly    = C.jvLogo === 'D' ? MG
+                : C.jvLogo === 'C' ? PH/2 - lh/2
+                : PH - MG - lh;
     ctx.drawImage(S.logo, lx, ly, lw, lh);
   }
 
-  /* TÍTOL — wrap multilínia */
+  /* TÍTOL — wrap multilínia, justificació lliure per A5 */
   if (C.tit) {
     const sz    = C.fsTit * ESC;
     const lineH = sz * 1.25;
     ctx.font    = fstr(sz, C.boldTit, C.italTit, C.fnTit);
     const lines = wrap(ctx, C.tit, maxW);
     const bh    = sz + (lines.length - 1) * lineH;
-    const jhT   = isA5 ? 'C' : C.jhTit;
-    const jvT   = isA5 ? 'C' : C.jvTit;
-    const zC    = isA5 ? PH*0.5 : PH/2;
-    const yt    = jvT==='D' ? MG : jvT==='C' ? zC-bh/2 : PH-MG-bh;
-    drawBlock(ctx, lines, sz, lineH, jhT, MG, PW/2, PW-MG, yt, C.cTit, C.sTit, ESC);
+    const yt    = ytop(C.jvTit, bh, PH, MG);
+    drawBlock(ctx, lines, sz, lineH, C.jhTit, MG, PW/2, PW-MG, yt, C.cTit, C.sTit, ESC);
   }
 
   /* COMPOSITOR — wrap multilínia */
@@ -268,7 +267,7 @@ function drawCover(ctx, C, isA5, PW, PH) {
     ctx.font    = fstr(sz, C.boldComp, C.italComp, C.fnComp);
     const lines = wrap(ctx, C.comp, maxW);
     const bh    = sz + (lines.length - 1) * lineH;
-    const yt    = isA5 ? ytop_a5_comp(C.jvComp, bh, PH, MG) : ytop(C.jvComp, bh, PH, MG);
+    const yt    = ytop(C.jvComp, bh, PH, MG);
     drawBlock(ctx, lines, sz, lineH, C.jhComp, MG, PW/2, PW-MG, yt, C.cComp, C.sComp, ESC);
   }
 }
