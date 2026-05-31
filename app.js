@@ -4,15 +4,21 @@
 'use strict';
 
 /* ── MIDES DE PÀGINA en punts PDF (1pt = 1/72")
-   A4 vertical:      210 × 297 mm = 595.28 × 841.89 pt  (PW < PH)
-   A5 horitzontal:   210 × 148 mm = 595.28 × 419.53 pt  (PW > PH)
-   Ambdós tenen la mateixa AMPLADA (595.28pt = 210mm).
-   L'A5 horitzontal és simplement un A4 tallat per la meitat per l'alçada.
-   ESC = A5H / A4H = 419.53 / 841.89 ≈ 0.498  →  fonts i marges a ~la meitat
+   A4 vertical:      210 × 297 mm → 595.28 × 841.89 pt  (ample × alt)
+   A5 horitzontal:   210 × 148 mm → 595.28 × 419.53 pt  (ample × alt)
+   Ambdós tenen la MATEIXA AMPLADA (210mm = 595.28pt).
+   A5 horitzontal = A4 en horitzontal, retallat per la meitat verticalment.
+
+   Factor d'escala (ESC):
+   Proporcional a la MENOR dimensió de cada pàgina:
+     A4 menor dim  = 595.28 pt (l'amplada, ja que és vertical)
+     A5 menor dim  = 419.53 pt (l'alçada, ja que és horitzontal)
+     ESC = 419.53 / 595.28 ≈ 0.705
+   Això fa que les fonts i marges escaling correctament en l'espai disponible.
 ────────────────────────────────────────────── */
 const A4W = 595.28, A4H = 841.89;
-const A5W = 595.28, A5H = 419.53;   // mateix ample que A4, meitat d'alçada
-const A5_ESC = A5H / A4H;           // ≈ 0.498 — escala proporcional a l'alçada
+const A5W = 595.28, A5H = 419.53;   // A5 horitzontal: ample=210mm, alt=148mm
+const A5_ESC = A5H / A4W;           // 419.53/595.28 ≈ 0.705
 const CS = 2;                        // canvas retina scale
 
 const S = { tab: 'a4', logo: null, fons: null };
@@ -228,7 +234,7 @@ function drawBlock(ctx, lines, sz, lineH, jh, xLeft, xCen, xRight, yTop_, color,
    L'escala ESC afecta fonts i marges verticalment.
 ══════════════════════════════════════════════════ */
 function drawCover(ctx, C, isA5, PW, PH) {
-  const ESC  = isA5 ? A5_ESC : 1.0;  // ≈0.498 per A5, 1.0 per A4
+  const ESC  = isA5 ? A5_ESC : 1.0;  // ≈0.705 per A5, 1.0 per A4
   const MG   = 50 * ESC;             // marge proporcional a l'alçada
   const OUT  = 20 * ESC;             // marc exterior proporcional
   const maxW = PW - 2 * MG;
@@ -363,34 +369,29 @@ function doRender() {
 }
 
 /* ── PDF EXPORT ──
-   Renderitzem a canvas 3× i incrustrem com a imatge PNG.
-   jsPDF: format=[amplada,alçada] en pt, sense paràmetre orientation
-   per evitar que jsPDF reordeni les mides. */
+   Generem el PDF dibuixant directament al canvas de preview (ja renderitzat)
+   i l'incrustant com a PNG.
+   NOTA: no fem ctx.save/restore ni ctx.scale en l'offscreen —
+   dibuixem a resolució 1:1 en pt i deixem que addImage escali. */
 function generatePDF(fmt) {
   const { jsPDF } = window.jspdf;
-  const C   = cfg();
+  const C    = cfg();
   const isA5 = fmt === 'a5';
-  const PW  = isA5 ? A5W : A4W;
-  const PH  = isA5 ? A5H : A4H;
-  const HI  = 3;
+  const PW   = isA5 ? A5W : A4W;
+  const PH   = isA5 ? A5H : A4H;
 
-  // Canvas d'alta resolució per al PDF
-  const off = document.createElement('canvas');
-  off.width  = Math.round(PW * HI);
-  off.height = Math.round(PH * HI);
-  const ctx  = off.getContext('2d');
-  ctx.save();
-  ctx.scale(HI, HI);
+  // Canvas en resolució 1:1 pt → evita problemes de canvas massa gran
+  const off    = document.createElement('canvas');
+  off.width    = Math.round(PW);
+  off.height   = Math.round(PH);
+  const ctx    = off.getContext('2d');
   drawCover(ctx, C, isA5, PW, PH);
-  ctx.restore();
+  const imgData = off.toDataURL('image/jpeg', 0.98);
 
-  // Creem el PDF amb les mides exactes en pt
-  // format:[PW,PH] li diu exactament quina amplada i alçada ha de tenir
-  const doc = new jsPDF({
-    unit:   'pt',
-    format: [PW, PH],
-  });
-  doc.addImage(off.toDataURL('image/png', 1.0), 'PNG', 0, 0, PW, PH);
+  // jsPDF amb mides exactes en pt. No passem 'orientation' per evitar
+  // que jsPDF reordeni amplada i alçada automàticament.
+  const doc = new jsPDF({ unit: 'pt', format: [PW, PH] });
+  doc.addImage(imgData, 'JPEG', 0, 0, PW, PH);
   const date = new Date().toISOString().slice(0, 10);
   doc.save('portada_' + fmt.toUpperCase() + '_' + date + '.pdf');
   toast('PDF ' + fmt.toUpperCase() + ' generat correctament.');
