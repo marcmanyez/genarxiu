@@ -3,12 +3,17 @@
  */
 'use strict';
 
+/* ── MIDES DE PÀGINA en punts PDF (1pt = 1/72")
+   A4 vertical:      210 × 297 mm = 595.28 × 841.89 pt  (PW < PH)
+   A5 horitzontal:   210 × 148 mm = 595.28 × 419.53 pt  (PW > PH)
+   Ambdós tenen la mateixa AMPLADA (595.28pt = 210mm).
+   L'A5 horitzontal és simplement un A4 tallat per la meitat per l'alçada.
+   ESC = A5H / A4H = 419.53 / 841.89 ≈ 0.498  →  fonts i marges a ~la meitat
+────────────────────────────────────────────── */
 const A4W = 595.28, A4H = 841.89;
-// A5 horitzontal: 148 × 210 mm = 419.53 × 595.28 pt
-const A5W = 419.53, A5H = 595.28;
-const CS  = 2; // canvas retina scale
-// Factor d'escala A5 respecte A4: A5W/A4W ≈ 0.7071 (√2 invers)
-const A5_ESC = A5W / A4W;
+const A5W = 595.28, A5H = 419.53;   // mateix ample que A4, meitat d'alçada
+const A5_ESC = A5H / A4H;           // ≈ 0.498 — escala proporcional a l'alçada
+const CS = 2;                        // canvas retina scale
 
 const S = { tab: 'a4', logo: null, fons: null };
 let _rt = null, _tt = null;
@@ -33,7 +38,7 @@ function syncPicker(id) {
   qR();
 }
 function syncText(id) {
-  const v = (val('ct-' + id)).trim();
+  const v = val('ct-' + id).trim();
   if (/^#[0-9a-fA-F]{6}$/i.test(v)) {
     const p = el('cp-' + id), sw = el('sw-' + id);
     if (p) p.value = v;
@@ -75,7 +80,9 @@ function onLogoSize(src) {
   el('logo-size-slider').value = v;
   qR();
 }
-function getLogoSize() { return Math.max(10, Math.min(400, parseInt(val('logo-size-num')) || 100)); }
+function getLogoSize() {
+  return Math.max(10, Math.min(400, parseInt(val('logo-size-num')) || 100));
+}
 
 /* ── IMAGES ── */
 function loadImg(file, cb) {
@@ -94,18 +101,25 @@ function loadLogo(inp) {
   });
 }
 function clearLogo() {
-  S.logo = null; el('logo-file').value = '';
+  S.logo = null;
+  el('logo-file').value = '';
   el('logo-name').textContent = '(cap)';
   el('logo-opts').style.display = 'none';
   el('status-logo').textContent = 'Sense logo';
   qR();
 }
 function loadFons(inp) {
-  loadImg(inp.files[0], (img, name) => { S.fons = img; el('fons-name').textContent = name; qR(); });
+  loadImg(inp.files[0], (img, name) => {
+    S.fons = img;
+    el('fons-name').textContent = name;
+    qR();
+  });
 }
 function clearFons() {
-  S.fons = null; el('fons-file').value = '';
-  el('fons-name').textContent = '(cap)'; qR();
+  S.fons = null;
+  el('fons-file').value = '';
+  el('fons-name').textContent = '(cap)';
+  qR();
 }
 
 /* ── TABS ── */
@@ -119,8 +133,11 @@ function setTab(t) {
 
 /* ── TOAST ── */
 function toast(msg) {
-  const e = el('toast'); e.textContent = msg; e.classList.add('show');
-  clearTimeout(_tt); _tt = setTimeout(() => e.classList.remove('show'), 2800);
+  const e = el('toast');
+  e.textContent = msg;
+  e.classList.add('show');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => e.classList.remove('show'), 2800);
 }
 
 /* ── ABOUT ── */
@@ -131,14 +148,16 @@ function showAbout() {
 /* ── READ CONFIG ── */
 function cfg() {
   return {
-    num: val('f-num'), tit: val('f-tit').toUpperCase(), comp: val('f-comp'),
+    num:   val('f-num'),
+    tit:   val('f-tit').toUpperCase(),
+    comp:  val('f-comp'),
     fnNum:  val('fn-num'),  fnTit:  val('fn-tit'),  fnComp:  val('fn-comp'),
     fsNum:  Math.max(8, parseInt(val('fs-num'))  || 48),
     fsTit:  Math.max(8, parseInt(val('fs-tit'))  || 72),
     fsComp: Math.max(8, parseInt(val('fs-comp')) || 28),
-    boldNum: isOn('bold-num'), italNum: isOn('ital-num'),
-    boldTit: isOn('bold-tit'), italTit: isOn('ital-tit'),
-    boldComp:isOn('bold-comp'),italComp:isOn('ital-comp'),
+    boldNum:  isOn('bold-num'),  italNum:  isOn('ital-num'),
+    boldTit:  isOn('bold-tit'),  italTit:  isOn('ital-tit'),
+    boldComp: isOn('bold-comp'), italComp: isOn('ital-comp'),
     cNum:  getCol('num'),  cTit:  getCol('tit'),  cComp: getCol('comp'),
     cMarc: getCol('marc'), cFons: getCol('fons'),
     sNum:  chk('sub-num'), sTit:  chk('sub-tit'), sComp: chk('sub-comp'),
@@ -156,51 +175,71 @@ function cfg() {
 function wrap(ctx, text, maxW) {
   const words = text.split(' ').filter(Boolean);
   if (!words.length) return [];
-  const lines = []; let line = words[0];
+  const lines = [];
+  let line = words[0];
   for (let i = 1; i < words.length; i++) {
     const test = line + ' ' + words[i];
     if (ctx.measureText(test).width <= maxW) line = test;
     else { lines.push(line); line = words[i]; }
   }
-  lines.push(line); return lines;
+  lines.push(line);
+  return lines;
 }
 
-/* ── POSITION ── */
-function xH(jh, left, cen, right) { return jh==='E'?left : jh==='C'?cen : right; }
-function ytop(jv, blockH, PH, MG) {
-  return jv==='D' ? MG : jv==='C' ? PH/2 - blockH/2 : PH - MG - blockH;
+/* ── POSICIÓ ──
+   Canvas: Y=0 és dalt-esquerra, baseline del text a Y.
+   D=Dalt, C=Centre, B=Baix  */
+function xH(jh, left, cen, right) {
+  return jh === 'E' ? left : jh === 'C' ? cen : right;
+}
+function yTop(jv, blockH, PH, MG) {
+  return jv === 'D' ? MG
+       : jv === 'C' ? (PH / 2) - (blockH / 2)
+       : PH - MG - blockH;
 }
 
-/* ── DRAW BLOCK ── */
-function drawBlock(ctx, lines, sz, lineH, jh, x0, xc, x1, y0, color, underline, esc) {
+/* ── DIBUIX D'UN BLOC DE TEXT (multilínia) ── */
+function drawBlock(ctx, lines, sz, lineH, jh, xLeft, xCen, xRight, yTop_, color, underline) {
   ctx.fillStyle = color;
   lines.forEach((line, i) => {
     const tw = ctx.measureText(line).width;
-    const tx = xH(jh, x0, xc - tw/2, x1 - tw);
-    const ty = y0 + sz + i * lineH;
+    const tx = xH(jh, xLeft, xCen - tw / 2, xRight - tw);
+    const ty = yTop_ + sz + i * lineH;   // ty = baseline de la línia i
     ctx.fillText(line, tx, ty);
     if (underline) {
-      ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(tx, ty+4); ctx.lineTo(tx+tw, ty+4); ctx.stroke();
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = Math.max(1, sz * 0.04);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty + 4);
+      ctx.lineTo(tx + tw, ty + 4);
+      ctx.stroke();
       ctx.restore();
     }
   });
 }
 
-/* ══ CORE DRAW ══ */
+/* ══════════════════════════════════════════════════
+   DIBUIX PRINCIPAL
+   PW, PH en punts PDF. Canvas ja escalat externament.
+   isA5: A5 horitzontal (PW=595.28, PH=419.53)
+   isA4: A4 vertical    (PW=595.28, PH=841.89)
+   Les dues pàgines tenen el MATEIX ample (210mm).
+   L'escala ESC afecta fonts i marges verticalment.
+══════════════════════════════════════════════════ */
 function drawCover(ctx, C, isA5, PW, PH) {
-  // ESC escala les mides de font i marges proporcionalment a la pàgina real.
-  // A5 horitzontal (419.53×595.28pt) té amplada = A4W/√2 → ESC = A5W/A4W ≈ 0.7071
-  const ESC  = isA5 ? A5_ESC : 1.0;
-  const MG   = 50 * ESC;   // marge proporcional a la pàgina
-  const OUT  = 20 * ESC;   // marc exterior proporcional
+  const ESC  = isA5 ? A5_ESC : 1.0;  // ≈0.498 per A5, 1.0 per A4
+  const MG   = 50 * ESC;             // marge proporcional a l'alçada
+  const OUT  = 20 * ESC;             // marc exterior proporcional
   const maxW = PW - 2 * MG;
 
-  /* FONS */
+  /* ── FONS ── */
   if (C.fonsIsColor || !S.fons) {
-    ctx.fillStyle = C.cFons; ctx.fillRect(0, 0, PW, PH);
+    ctx.fillStyle = C.cFons;
+    ctx.fillRect(0, 0, PW, PH);
   } else {
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, PW, PH);
     const sc = Math.max(PW / S.fons.width, PH / S.fons.height);
     ctx.drawImage(S.fons,
       (PW - S.fons.width  * sc) / 2,
@@ -208,194 +247,252 @@ function drawCover(ctx, C, isA5, PW, PH) {
       S.fons.width * sc, S.fons.height * sc);
   }
 
-  /* MARC */
+  /* ── MARC ── */
   if (C.showMarc) {
     ctx.strokeStyle = C.cMarc;
     ctx.lineWidth   = 2 * ESC;
-    ctx.strokeRect(OUT, OUT, PW - 2*OUT, PH - 2*OUT);
+    ctx.strokeRect(OUT, OUT, PW - 2 * OUT, PH - 2 * OUT);
   }
 
-  /* NÚMERO — sempre una línia, redueix mida si no cap */
+  /* ── NÚMERO — una sola línia, redueix si no cap ── */
   if (C.num) {
     let fsz = C.fsNum * ESC;
     ctx.font = fstr(fsz, C.boldNum, C.italNum, C.fnNum);
     while (fsz > 10 && ctx.measureText(C.num).width > maxW) {
-      fsz -= 2; ctx.font = fstr(fsz, C.boldNum, C.italNum, C.fnNum);
+      fsz -= 2;
+      ctx.font = fstr(fsz, C.boldNum, C.italNum, C.fnNum);
     }
     const tw = ctx.measureText(C.num).width;
-    const nx = xH(C.jhNum, MG, PW/2 - tw/2, PW - MG - tw);
-    const yt = isA5 ? ytop_a5_num(C.jvNum, fsz, PH, MG) : ytop(C.jvNum, fsz, PH, MG);
-    const ny = yt + fsz;
+    const nx = xH(C.jhNum, MG, PW / 2 - tw / 2, PW - MG - tw);
+    const yt = yTop(C.jvNum, fsz, PH, MG);
+    const ny = yt + fsz;  // baseline = yTop + alçada de font
     ctx.fillStyle = C.cNum;
     ctx.fillText(C.num, nx, ny);
     if (C.sNum) {
-      ctx.save(); ctx.strokeStyle = C.cNum; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(nx, ny+4); ctx.lineTo(nx+tw, ny+4); ctx.stroke();
+      ctx.save();
+      ctx.strokeStyle = C.cNum;
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(nx, ny + 4);
+      ctx.lineTo(nx + tw, ny + 4);
+      ctx.stroke();
       ctx.restore();
     }
   }
 
-  /* LOGOTIP */
+  /* ── LOGOTIP ── */
   if (S.logo) {
     const pct   = C.logoSize / 100;
     const baseW = C.fsNum * ESC * 2 * pct;
     const baseH = C.fsNum * ESC * 1.5 * pct;
     const sc    = Math.min(baseW / S.logo.width, baseH / S.logo.height);
-    const lw    = S.logo.width * sc, lh = S.logo.height * sc;
-    const lx    = xH(C.jhLogo, MG, PW/2 - lw/2, PW - MG - lw);
+    const lw    = S.logo.width  * sc;
+    const lh    = S.logo.height * sc;
+    const lx    = xH(C.jhLogo, MG, PW / 2 - lw / 2, PW - MG - lw);
     const ly    = C.jvLogo === 'D' ? MG
-                : C.jvLogo === 'C' ? PH/2 - lh/2
+                : C.jvLogo === 'C' ? PH / 2 - lh / 2
                 : PH - MG - lh;
     ctx.drawImage(S.logo, lx, ly, lw, lh);
   }
 
-  /* TÍTOL — wrap multilínia, justificació lliure per A5 */
+  /* ── TÍTOL — wrap multilínia ── */
   if (C.tit) {
     const sz    = C.fsTit * ESC;
     const lineH = sz * 1.25;
     ctx.font    = fstr(sz, C.boldTit, C.italTit, C.fnTit);
     const lines = wrap(ctx, C.tit, maxW);
     const bh    = sz + (lines.length - 1) * lineH;
-    const yt    = ytop(C.jvTit, bh, PH, MG);
-    drawBlock(ctx, lines, sz, lineH, C.jhTit, MG, PW/2, PW-MG, yt, C.cTit, C.sTit, ESC);
+    const yt    = yTop(C.jvTit, bh, PH, MG);
+    drawBlock(ctx, lines, sz, lineH, C.jhTit, MG, PW / 2, PW - MG, yt, C.cTit, C.sTit);
   }
 
-  /* COMPOSITOR — wrap multilínia */
+  /* ── COMPOSITOR — wrap multilínia ── */
   if (C.comp) {
     const sz    = C.fsComp * ESC;
     const lineH = sz * 1.25;
     ctx.font    = fstr(sz, C.boldComp, C.italComp, C.fnComp);
     const lines = wrap(ctx, C.comp, maxW);
     const bh    = sz + (lines.length - 1) * lineH;
-    const yt    = ytop(C.jvComp, bh, PH, MG);
-    drawBlock(ctx, lines, sz, lineH, C.jhComp, MG, PW/2, PW-MG, yt, C.cComp, C.sComp, ESC);
+    const yt    = yTop(C.jvComp, bh, PH, MG);
+    drawBlock(ctx, lines, sz, lineH, C.jhComp, MG, PW / 2, PW - MG, yt, C.cComp, C.sComp);
   }
 }
 
-/* ── RENDER ── */
-function qR() { clearTimeout(_rt); _rt = setTimeout(doRender, 60); }
+/* ── PREVIEW ── */
+function qR() {
+  clearTimeout(_rt);
+  _rt = setTimeout(doRender, 60);
+}
 
 function doRender() {
   const C    = cfg();
   const area = el('preview-area');
-  const aW   = area.clientWidth - 40, aH = area.clientHeight - 40;
+  const aW   = area.clientWidth  - 40;
+  const aH   = area.clientHeight - 40;
   const both = S.tab === 'both';
 
-  function one(cvId, isA5) {
+  function renderOne(cvId, isA5) {
     const cv = el(cvId);
-    const PW = isA5 ? A5W : A4W, PH = isA5 ? A5H : A4H;
+    const PW = isA5 ? A5W : A4W;
+    const PH = isA5 ? A5H : A4H;
+    // Canvas en píxels físics (2×)
     cv.width  = Math.round(PW * CS);
     cv.height = Math.round(PH * CS);
     const ctx = cv.getContext('2d');
-    ctx.save(); ctx.scale(CS, CS);
+    ctx.save();
+    ctx.scale(CS, CS);
     drawCover(ctx, C, isA5, PW, PH);
     ctx.restore();
-    const slotW = both ? aW/2 - 10 : aW;
-    const sc = Math.min(slotW/PW, aH/PH, 1);
-    cv.style.width  = (PW*sc) + 'px';
-    cv.style.height = (PH*sc) + 'px';
+    // Escala CSS per encabir a l'àrea de preview
+    const slotW = both ? aW / 2 - 10 : aW;
+    const sc    = Math.min(slotW / PW, aH / PH, 1);
+    cv.style.width  = (PW * sc) + 'px';
+    cv.style.height = (PH * sc) + 'px';
   }
-  if (S.tab==='a4' || both) one('cv-a4', false);
-  if (S.tab==='a5' || both) one('cv-a5', true);
 
+  if (S.tab === 'a4' || both) renderOne('cv-a4', false);
+  if (S.tab === 'a5' || both) renderOne('cv-a5', true);
+
+  // Barra d'estat
   const parts = [];
   if (C.num)  parts.push('Nº: ' + C.num);
-  if (C.tit)  parts.push(C.tit.slice(0,30) + (C.tit.length>30?'…':''));
+  if (C.tit)  parts.push(C.tit.slice(0, 30) + (C.tit.length > 30 ? '…' : ''));
   if (C.comp) parts.push(C.comp);
   const st = el('status-content');
   if (st) st.textContent = parts.join(' · ') || 'Cap contingut';
 }
 
-/* ── PDF ── */
+/* ── PDF EXPORT ──
+   Renderitzem a canvas 3× i incrustrem com a imatge PNG.
+   jsPDF: format=[amplada,alçada] en pt, sense paràmetre orientation
+   per evitar que jsPDF reordeni les mides. */
 function generatePDF(fmt) {
   const { jsPDF } = window.jspdf;
-  const C = cfg(), isA5 = fmt==='a5';
-  const PW = isA5?A5W:A4W, PH = isA5?A5H:A4H;
+  const C   = cfg();
+  const isA5 = fmt === 'a5';
+  const PW  = isA5 ? A5W : A4W;
+  const PH  = isA5 ? A5H : A4H;
+  const HI  = 3;
+
+  // Canvas d'alta resolució per al PDF
   const off = document.createElement('canvas');
-  off.width = Math.round(PW*3); off.height = Math.round(PH*3);
-  const ctx = off.getContext('2d'); ctx.save(); ctx.scale(3,3);
-  drawCover(ctx, C, isA5, PW, PH); ctx.restore();
-  const doc = new jsPDF({ orientation: isA5?'l':'p', unit:'pt', format:[PW,PH] });
-  doc.addImage(off.toDataURL('image/png',1), 'PNG', 0, 0, PW, PH);
-  doc.save('portada_'+fmt.toUpperCase()+'_'+new Date().toISOString().slice(0,10)+'.pdf');
-  toast('PDF '+fmt.toUpperCase()+' generat correctament.');
+  off.width  = Math.round(PW * HI);
+  off.height = Math.round(PH * HI);
+  const ctx  = off.getContext('2d');
+  ctx.save();
+  ctx.scale(HI, HI);
+  drawCover(ctx, C, isA5, PW, PH);
+  ctx.restore();
+
+  // Creem el PDF amb les mides exactes en pt
+  // format:[PW,PH] li diu exactament quina amplada i alçada ha de tenir
+  const doc = new jsPDF({
+    unit:   'pt',
+    format: [PW, PH],
+  });
+  doc.addImage(off.toDataURL('image/png', 1.0), 'PNG', 0, 0, PW, PH);
+  const date = new Date().toISOString().slice(0, 10);
+  doc.save('portada_' + fmt.toUpperCase() + '_' + date + '.pdf');
+  toast('PDF ' + fmt.toUpperCase() + ' generat correctament.');
 }
 
 /* ── EXPORT CONFIG ── */
 function exportConfig() {
-  const C = cfg();
+  const C  = cfg();
   const jv = {};
   ['jh-num','jv-num','jh-tit','jv-tit','jh-comp','jv-comp','jh-logo','jv-logo'].forEach(id => {
     const g = el(id); if (g) jv[id] = g.dataset.v;
   });
   const out = {
-    font_numero:C.fnNum, font_titol:C.fnTit, font_compositor:C.fnComp,
-    mida_numero:C.fsNum, mida_titol:C.fsTit, mida_compositor:C.fsComp,
-    bold_num:C.boldNum, ital_num:C.italNum,
-    bold_tit:C.boldTit, ital_tit:C.italTit,
-    bold_comp:C.boldComp, ital_comp:C.italComp,
-    color_numero:C.cNum, color_titol:C.cTit, color_compositor:C.cComp,
-    color_quadre:C.cMarc, fons_color:C.cFons,
-    sub_num:C.sNum, sub_titol:C.sTit, sub_comp:C.sComp,
-    just_num:C.jhNum, justv_num:C.jvNum, just_titol:C.jhTit, justv_titol:C.jvTit,
-    just_comp:C.jhComp, justv_comp:C.jvComp, just_img:C.jhLogo, justv_img:C.jvLogo,
-    logo_size:C.logoSize, mostrar_quadre:C.showMarc,
-    fons_mode:C.fonsIsColor?'Color sòlid':'Imatge',
+    font_numero: C.fnNum, font_titol: C.fnTit, font_compositor: C.fnComp,
+    mida_numero: C.fsNum, mida_titol: C.fsTit, mida_compositor: C.fsComp,
+    bold_num:  C.boldNum,  ital_num:  C.italNum,
+    bold_tit:  C.boldTit,  ital_tit:  C.italTit,
+    bold_comp: C.boldComp, ital_comp: C.italComp,
+    color_numero: C.cNum, color_titol: C.cTit, color_compositor: C.cComp,
+    color_quadre: C.cMarc, fons_color: C.cFons,
+    sub_num: C.sNum, sub_titol: C.sTit, sub_comp: C.sComp,
+    just_num: C.jhNum, justv_num: C.jvNum,
+    just_titol: C.jhTit, justv_titol: C.jvTit,
+    just_comp: C.jhComp, justv_comp: C.jvComp,
+    just_img: C.jhLogo, justv_img: C.jvLogo,
+    logo_size: C.logoSize,
+    mostrar_quadre: C.showMarc,
+    fons_mode: C.fonsIsColor ? 'Color sòlid' : 'Imatge',
     dark_mode: document.body.classList.contains('dark'),
-    _jv:jv, _version:'web-v0.1', _app:'GenArxiu',
+    _jv: jv, _version: 'web-v0.1', _app: 'GenArxiu',
   };
-  const blob = new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
-  Object.assign(document.createElement('a'),{href:url,download:'genarxiu_config.json'}).click();
+  Object.assign(document.createElement('a'), { href: url, download: 'genarxiu_config.json' }).click();
   URL.revokeObjectURL(url);
   toast('Configuració exportada.');
 }
 
 /* ── IMPORT CONFIG ── */
 function importConfig() {
-  const inp = document.createElement('input'); inp.type='file'; inp.accept='.json';
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
   inp.onchange = e => {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = ev => { try { applyConfig(JSON.parse(ev.target.result)); toast('Configuració carregada.'); }
-                       catch { toast("Error llegint el JSON."); } };
+    r.onload = ev => {
+      try   { applyConfig(JSON.parse(ev.target.result)); toast('Configuració carregada.'); }
+      catch { toast("Error llegint el JSON."); }
+    };
     r.readAsText(f);
   };
   inp.click();
 }
 
 function applyConfig(c) {
-  function sv(id,v)  { const e=el(id); if(e&&v!=null) e.value=v; }
-  function sc(id,v)  { const e=el(id); if(e) e.checked=!!v; }
-  function sCol(id,h){ if(!h||!/^#[0-9a-fA-F]{6}$/i.test(h))return;
-    const t=el('ct-'+id),p=el('cp-'+id),sw=el('sw-'+id);
-    if(t)t.value=h; if(p)p.value=h; if(sw)sw.style.background=h; }
-  function sJG(gid,v){ if(!v)return; const g=el(gid); if(!g)return;
-    g.dataset.v=v; g.querySelectorAll('.just-btn').forEach(b=>b.classList.toggle('on',b.dataset.k===v)); }
-  function sTog(id,v){ const e=el(id); if(e) e.classList.toggle('on',!!v); }
+  function sv(id, v)  { const e = el(id); if (e && v != null) e.value = v; }
+  function sc(id, v)  { const e = el(id); if (e) e.checked = !!v; }
+  function sCol(id, h) {
+    if (!h || !/^#[0-9a-fA-F]{6}$/i.test(h)) return;
+    const t = el('ct-' + id), p = el('cp-' + id), sw = el('sw-' + id);
+    if (t) t.value = h; if (p) p.value = h; if (sw) sw.style.background = h;
+  }
+  function sJG(gid, v) {
+    if (!v) return;
+    const g = el(gid); if (!g) return;
+    g.dataset.v = v;
+    g.querySelectorAll('.just-btn').forEach(b => b.classList.toggle('on', b.dataset.k === v));
+  }
+  function sTog(id, v) { const e = el(id); if (e) e.classList.toggle('on', !!v); }
 
-  sv('fn-num', c.font_numero||'Arial,sans-serif');
-  sv('fn-tit', c.font_titol||'Arial,sans-serif');
-  sv('fn-comp',c.font_compositor||'Arial,sans-serif');
-  sv('fs-num', c.mida_numero||48);
-  sv('fs-tit', c.mida_titol||72);
-  sv('fs-comp',c.mida_compositor||28);
-  sTog('bold-num',c.bold_num);  sTog('ital-num',c.ital_num);
-  sTog('bold-tit',c.bold_tit);  sTog('ital-tit',c.ital_tit);
-  sTog('bold-comp',c.bold_comp);sTog('ital-comp',c.ital_comp);
-  sCol('num',c.color_numero||'#000000'); sCol('tit',c.color_titol||'#000000');
-  sCol('comp',c.color_compositor||'#000000'); sCol('marc',c.color_quadre||'#000000');
-  sCol('fons',c.fons_color||'#ffffff');
-  sc('sub-num',c.sub_num); sc('sub-tit',c.sub_titol); sc('sub-comp',c.sub_comp);
-  sc('show-marc',c.mostrar_quadre??true);
-  sv('fons-mode',c.fons_mode==='Imatge'?'imatge':'color'); onFonsModeChange();
-  const ls = c.logo_size||100; sv('logo-size-num',ls); sv('logo-size-slider',ls);
+  sv('fn-num',  c.font_numero     || 'Arial,sans-serif');
+  sv('fn-tit',  c.font_titol      || 'Arial,sans-serif');
+  sv('fn-comp', c.font_compositor || 'Arial,sans-serif');
+  sv('fs-num',  c.mida_numero     || 48);
+  sv('fs-tit',  c.mida_titol      || 72);
+  sv('fs-comp', c.mida_compositor || 28);
+  sTog('bold-num',  c.bold_num);   sTog('ital-num',  c.ital_num);
+  sTog('bold-tit',  c.bold_tit);   sTog('ital-tit',  c.ital_tit);
+  sTog('bold-comp', c.bold_comp);  sTog('ital-comp', c.ital_comp);
+  sCol('num',  c.color_numero     || '#000000');
+  sCol('tit',  c.color_titol      || '#000000');
+  sCol('comp', c.color_compositor || '#000000');
+  sCol('marc', c.color_quadre     || '#000000');
+  sCol('fons', c.fons_color       || '#ffffff');
+  sc('sub-num',  c.sub_num);
+  sc('sub-tit',  c.sub_titol);
+  sc('sub-comp', c.sub_comp);
+  sc('show-marc', c.mostrar_quadre ?? true);
+  sv('fons-mode', c.fons_mode === 'Imatge' ? 'imatge' : 'color');
+  onFonsModeChange();
+  const ls = c.logo_size || 100;
+  sv('logo-size-num', ls); sv('logo-size-slider', ls);
   if (c.dark_mode) document.body.classList.add('dark');
-  const jv = c._jv||{};
-  sJG('jh-num',jv['jh-num']||c.just_num||'E');  sJG('jv-num',jv['jv-num']||c.justv_num||'D');
-  sJG('jh-tit',jv['jh-tit']||c.just_titol||'C'); sJG('jv-tit',jv['jv-tit']||c.justv_titol||'C');
-  sJG('jh-comp',jv['jh-comp']||c.just_comp||'E'); sJG('jv-comp',jv['jv-comp']||c.justv_comp||'B');
-  sJG('jh-logo',jv['jh-logo']||c.just_img||'D');  sJG('jv-logo',jv['jv-logo']||c.justv_img||'D');
+  const jv = c._jv || {};
+  sJG('jh-num',  jv['jh-num']  || c.just_num    || 'E');
+  sJG('jv-num',  jv['jv-num']  || c.justv_num   || 'D');
+  sJG('jh-tit',  jv['jh-tit']  || c.just_titol  || 'C');
+  sJG('jv-tit',  jv['jv-tit']  || c.justv_titol || 'C');
+  sJG('jh-comp', jv['jh-comp'] || c.just_comp   || 'E');
+  sJG('jv-comp', jv['jv-comp'] || c.justv_comp  || 'B');
+  sJG('jh-logo', jv['jh-logo'] || c.just_img    || 'D');
+  sJG('jv-logo', jv['jv-logo'] || c.justv_img   || 'D');
   qR();
 }
 
