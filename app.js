@@ -412,8 +412,11 @@ function generatePDF(fmt) {
     compress: true
   });
   doc.addImage(imgData, 'JPEG', 0, 0, PW, PH, undefined, 'FAST');
-  const date = new Date().toISOString().slice(0, 10);
-  doc.save('portada_' + fmt.toUpperCase() + '_' + date + '.pdf');
+  // Nom del fitxer: portadaA4_TítolSenseEspais.pdf / portadaA5_TítolSenseEspais.pdf
+  // (sense espais ni caràcters no permesos en noms de fitxer)
+  const titolNet = val('f-tit').replace(/[\s\\/:*?"<>|]+/g, '');
+  const nomFitxer = 'portada' + fmt.toUpperCase() + (titolNet ? '_' + titolNet : '') + '.pdf';
+  doc.save(nomFitxer);
   toast('PDF ' + fmt.toUpperCase() + ' generat correctament.');
 }
 
