@@ -330,8 +330,20 @@ function qR() {
   _rt = setTimeout(doRender, 60);
 }
 
+/* Les fonts web (Titillium Web) s'han de carregar abans de dibuixar al canvas */
+function fontsReady(C) {
+  if (!document.fonts || !document.fonts.load) return true;
+  const specs = [];
+  [[C.fnNum, C.boldNum, C.italNum], [C.fnTit, C.boldTit, C.italTit], [C.fnComp, C.boldComp, C.italComp]]
+    .forEach(([fam, b, i]) => { if (/Titillium/i.test(fam)) specs.push(fstr(16, b, i, fam)); });
+  if (specs.every(sp => document.fonts.check(sp))) return true;
+  Promise.all(specs.map(sp => document.fonts.load(sp))).then(() => qR(), () => {});
+  return false;
+}
+
 function doRender() {
   const C    = cfg();
+  if (!fontsReady(C)) return;
   const area = el('preview-area');
   const aW   = area.clientWidth  - 40;
   const aH   = area.clientHeight - 40;
@@ -369,29 +381,37 @@ function doRender() {
 }
 
 /* ── PDF EXPORT ──
-   Generem el PDF dibuixant directament al canvas de preview (ja renderitzat)
-   i l'incrustant com a PNG.
-   NOTA: no fem ctx.save/restore ni ctx.scale en l'offscreen —
-   dibuixem a resolució 1:1 en pt i deixem que addImage escali. */
+   Dibuixem la portada en un canvas fora de pantalla a alta resolució
+   (300 dpi) i la incrustem al PDF, que té la mida exacta en pt.
+   Abans es dibuixava a 1 px per pt (72 dpi), per això sortia pixel·lat.
+   IMPORTANT: cal passar 'orientation' a jsPDF. Si no, amb format
+   [ample, alt] i ample > alt (A5 horitzontal), jsPDF intercanvia les
+   mides i el full surt vertical (419 × 595) tallant la imatge. */
+const PDF_DPI = 300;
+
 function generatePDF(fmt) {
   const { jsPDF } = window.jspdf;
   const C    = cfg();
   const isA5 = fmt === 'a5';
   const PW   = isA5 ? A5W : A4W;
   const PH   = isA5 ? A5H : A4H;
+  const K    = PDF_DPI / 72;               // píxels per punt
 
-  // Canvas en resolució 1:1 pt → evita problemes de canvas massa gran
   const off    = document.createElement('canvas');
-  off.width    = Math.round(PW);
-  off.height   = Math.round(PH);
+  off.width    = Math.round(PW * K);
+  off.height   = Math.round(PH * K);
   const ctx    = off.getContext('2d');
+  ctx.scale(K, K);
   drawCover(ctx, C, isA5, PW, PH);
-  const imgData = off.toDataURL('image/jpeg', 0.98);
+  const imgData = off.toDataURL('image/jpeg', 0.95);
 
-  // jsPDF amb mides exactes en pt. No passem 'orientation' per evitar
-  // que jsPDF reordeni amplada i alçada automàticament.
-  const doc = new jsPDF({ unit: 'pt', format: [PW, PH] });
-  doc.addImage(imgData, 'JPEG', 0, 0, PW, PH);
+  const doc = new jsPDF({
+    orientation: isA5 ? 'landscape' : 'portrait',
+    unit: 'pt',
+    format: [PW, PH],
+    compress: true
+  });
+  doc.addImage(imgData, 'JPEG', 0, 0, PW, PH, undefined, 'FAST');
   const date = new Date().toISOString().slice(0, 10);
   doc.save('portada_' + fmt.toUpperCase() + '_' + date + '.pdf');
   toast('PDF ' + fmt.toUpperCase() + ' generat correctament.');
